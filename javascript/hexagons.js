@@ -18,18 +18,20 @@
         {
             var tile = new map.tile(x, y);
 
-            tile._base = (Math.random() < 0.5 ? "green" : "blue");
+            var base = Math.random();
+            if (base < 0.5)
+                tile._base = "green";
+            else if (base < 0.7)
+                tile._base = "#666";
+            else
+                tile._base = "blue";
+
             if (tile._base == "green")
             {
                 var rand = Math.random();
-                if (rand < 0.2)
-                {
+                if (rand <= 0.2)
                     tile._vegetation = "forest";
-                    tile._settlement = "hut";
-                }
-                else if (rand < 0.5)
-                    tile._vegetation = "forest";
-                else if (rand > 0.8)
+                else if (rand >= 0.8)
                     tile._settlement = "hut";
             }
 

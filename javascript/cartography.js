@@ -27,6 +27,8 @@ cartography.settings = function (canvasId, map, spriteSheet)
 
     // functions
     this.getMouseHex = cartography.getMouseHex;
+    this.getHexPos = cartography.getHexPos;
+    this.getNeighbouringHexs = cartography.getNeighbouringHexs;
     this.drawBoard = cartography.drawBoard;
     this.drawHexagon = cartography.drawHexagon;
     this.drawSprite = cartography.drawSprite;
@@ -55,15 +57,17 @@ cartography.go = function (elementId, map, spriteSheet)
 {
     var version = new cartography.settings(elementId, map, spriteSheet);
     
-    $("#debug").html("hexHeight: " + version._hexHeight + "<br />hexRectangleHeight: " + version._hexRectangleHeight + "<br />hexRectangleWidth: " + version._hexRectangleWidth);
-
     version.drawBoard();
 }
 
 cartography.mouseClick = function(eventInfo)
 {
     var mouseCurrentHex = this.getMouseHex(eventInfo);
-    alert("x:" + mouseCurrentHex.x + ", y:" + mouseCurrentHex.y + ", hexX:" + mouseCurrentHex.hexX + ", hexY:" + mouseCurrentHex.hexY);
+    
+    var tile = this._map.getTileAt(mouseCurrentHex.hexX, mouseCurrentHex.hexY);
+
+    tile.click();
+             
 }
 
 cartography.mouseMove = function (eventInfo)
@@ -83,7 +87,14 @@ cartography.mouseMove = function (eventInfo)
                 this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
                 this.drawBoard();
 
-                this.drawHexagon(this._mouseLastHex.x, this._mouseLastHex.y, "#000000", 0.5);
+                this.drawHexagon(this._mouseLastHex.x, this._mouseLastHex.y, "#fff", 0.5);
+
+                var neighbours = this.getNeighbouringHexs(this._mouseLastHex, 1);
+                for (var neighbour in neighbours)
+                {
+                    if(neighbours[neighbour])
+                        this.drawHexagon(neighbours[neighbour].x, neighbours[neighbour].y, "#fff", 0.5);
+                }
             }
         }
     }
@@ -94,7 +105,7 @@ cartography.mouseOut = function (eventInfo)
     this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     this.drawBoard();
 }
-
+// takes a mouse position and works out the top left of the hex + its x/y position
 cartography.getMouseHex = function(eventInfo)
 {
     var x, y, hexX, hexY;
@@ -105,14 +116,62 @@ cartography.getMouseHex = function(eventInfo)
     hexY = Math.floor(y / (this._hexHeight + this._sideLength));
     hexX = Math.floor((x - (hexY % 2) * this._hexRadius) / this._hexRectangleWidth);
 
-    var mouseCurrentHex = {
+    var hexInfo = {
         hexX: hexX,
         hexY: hexY,
         x: hexX * this._hexRectangleWidth + ((hexY % 2) * this._hexRadius),
         y: hexY * (this._hexHeight + this._sideLength)
     };
 
-    return mouseCurrentHex;
+    return hexInfo;
+}
+// takes the x/y position of a hex and works out the top left corner
+cartography.getHexPos = function (hexX, hexY)
+{
+    var hexInfo = {
+        hexX: hexX,
+        hexY: hexY,
+        x: hexX * this._hexRectangleWidth + ((hexY % 2) * this._hexRadius),
+        y: hexY * (this._hexHeight + this._sideLength)
+    };
+    
+    return hexInfo;
+}
+
+cartography.getNeighbouringHexs = function (hexInfo, range)
+{
+    var hexes = [];
+    hexes.push(hexInfo);
+
+    // this almost works
+    var that = this;
+    function getHexes(inHexes)
+    {
+        while (range > 0)
+        {
+            var hexes = [];
+            for(var i = 0; i < inHexes.length; i++)
+            {
+                var x = inHexes[i].hexX;
+                var y = inHexes[i].hexY;
+
+                hexes.push(that.getHexPos((x - range), y));
+                hexes.push(that.getHexPos((x + range), y));
+                hexes.push(that.getHexPos(x, (y - range)));
+                hexes.push(that.getHexPos(x, (y + range)));
+                hexes.push(that.getHexPos((x - ((y % 2) == 0 ? 1 : -1)), (y - range)));
+                hexes.push(that.getHexPos((x - ((y % 2) == 0 ? 1 : -1)), (y + range)));
+            }
+            // add these onto the array to pass down
+            inHexes = inHexes.concat(hexes);
+            range--;
+            return hexes.concat(getHexes(inHexes));
+        }
+    }
+
+    var neighbours = getHexes(hexes);
+
+    return neighbours;
 }
 
 cartography.drawBoard = function()

@@ -23,6 +23,9 @@ map.tile = function(x, y)
     this._minerals = {};
     this._agriculture = {};
 
+    // functions
+    this.click = map.tileClick;
+
     
 }
 
@@ -33,4 +36,23 @@ map.getTileAt = function (x, y)
         if (this._tiles[i]._x == x && this._tiles[i]._y == y)
             return this._tiles[i];
     }
+}
+
+map.tileClick = function ()
+{
+    var id = Math.random().toString().substring(3);
+
+    var html = "<div title='You clicked' id='" + id + "' >"
+             + "id: " + id + "<br />"
+             + "base: " + this._base + "<br />"
+             + "vegetation: " + (this._vegetation || "") + "<br />"
+             + "settlement: " + (this._settlement || "") + "<br />"
+             + "</div>";
+
+    $(html).dialog(
+    {
+        modal: true,
+        close: function () { $(this).empty().remove(); },
+        buttons: { "Close": function () { $(this).dialog("close"); } }
+    });
 }
