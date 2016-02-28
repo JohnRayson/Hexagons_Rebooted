@@ -1,17 +1,25 @@
-﻿html, body { margin: 0px; padding: 0px; height: 100%; overflow:hidden; }
+﻿html, body { margin: 0px; padding: 0px; height: 100%; overflow:hidden; font-family: Book Antiqua, Palatino, Palatino Linotype, Palatino LT STD, Georgia, serif; }
 
-canvas { border:0; display:block; margin:0 auto; }
+html { 
+  background: url(images/background.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+canvas { border:0; display:block; margin:0px 10px; width: 100%; background-color: transparent; }
 
 .container {
     height: 100%;
     height: 100%;
 }
 
-.header {
+.header, .footer {
     padding: 0px;
     margin: 0px;
-    height: 50px;
-    border-bottom:1px solid black;
+    height: 50px;  
+    background-color: transparent;
 }
 
 .mapviewport {
@@ -29,9 +37,3 @@ canvas { border:0; display:block; margin:0 auto; }
     width: 100%;
 }
 
-.footer {
-    border-top:1px solid black;
-    padding: 0px;
-    margin: 0px;
-    height: 50px;
-}
