@@ -1,6 +1,6 @@
 ﻿var cartography = {};
 
-cartography.settings = function (canvasId, map, spriteSheet)
+cartography.settings = function (canvasId, spriteSheet)
 {
     this._canvas = document.getElementById(canvasId);
     this._ctx = this._canvas.getContext('2d');
@@ -9,7 +9,7 @@ cartography.settings = function (canvasId, map, spriteSheet)
     this._ctx.strokeStyle = "#CCCCCC";
     this._ctx.lineWidth = 1;
 
-    this._map = map;
+    this._map = null;
     this._spriteSheet = spriteSheet;
     this._hexHeight = null;
     this._hexRadius = null;
@@ -26,6 +26,7 @@ cartography.settings = function (canvasId, map, spriteSheet)
     this._mouseLastHex = { X: null, y: null };
 
     // functions
+    this.floodFill = cartography.floodFill;
     this.getMouseHex = cartography.getMouseHex;
     this.getHexPos = cartography.getHexPos;
     this.getHexXY = cartography.getHexXY;
@@ -46,16 +47,12 @@ cartography.settings = function (canvasId, map, spriteSheet)
     });
     this._canvas.addEventListener("mousemove", function (eventInfo)
     {
-        that.mouseMove(eventInfo);
+        //that.mouseMove(eventInfo);
     });
     this._canvas.addEventListener("mouseout", function (eventInfo)
     {
-        that.mouseOut(eventInfo);
+        //that.mouseOut(eventInfo);
     });
-}
-
-cartography.debug = {
-    mode: "location", // location|distance|weight
 }
 
 cartography.go = function (elementId, map, spriteSheet)
@@ -70,8 +67,8 @@ cartography.mouseClick = function(eventInfo)
     var mouseCurrentHex = this.getMouseHex(eventInfo);
     
     var tile = this._map.getTileAt(mouseCurrentHex.hexX, mouseCurrentHex.hexY);
-
-    tile.click();
+    if(tile)
+        tile.click();
              
 }
 
@@ -94,12 +91,51 @@ cartography.mouseMove = function (eventInfo)
 
                 //this.drawHexagon(this._mouseLastHex.x, this._mouseLastHex.y, "#fff", 0.5);
 
+
                 var neighbours = this.getNeighbouringHexs(this._mouseLastHex, 3);
                 for (var neighbour in neighbours)
                 {
                     if(neighbours[neighbour])
-                        this.drawHexagon(neighbours[neighbour].x, neighbours[neighbour].y, "#fff", 0.5, cartography.debug);
+                        this.drawHexagon(neighbours[neighbour].x, neighbours[neighbour].y, "#fff", 0.5);
                 }
+            }
+        }
+    }
+}
+
+cartography.floodFill = function (source, range)
+{
+    var frontier = [];
+    var visited = [];
+
+    // add the source to the frontier
+    source._tmp = {};
+    source._tmp.range = 0;
+    frontier.push(source);
+
+    for (var i = 0; i < frontier.length; i++)
+    {
+        frontier[i].highlight();
+        frontier[i]._tmp.visited = true;
+        var near = frontier[i].getNeighbours();
+        // check that none of them are already visited
+        var minRange = null;
+        for (var j = 0; j < near.length; j++)
+        {
+            if (near[j]._tmp)
+            {
+                if (!minRange || near[j]._tmp.range < minRange)
+                    minRange = near[j]._tmp.range;
+            }
+        }
+        minRange++;
+        for (var j = 0; j < near.length; j++)
+        {
+            if (!near[j]._tmp)
+            {
+                near[j]._tmp = { visited: false, range: minRange }
+                if(minRange <= range)
+                    frontier.push(near[j]);
             }
         }
     }
@@ -150,7 +186,7 @@ cartography.getHexXY = function (offsetX, offsetY)
     return hexInfo;
 }
 // takes the x/y position of a hex and works out the top left corner
-cartography.getHexPos = function (hexX, hexY, rangeFrom)
+cartography.getHexPos = function (hexX, hexY)
 {
     var hexInfo = {
         hexX: hexX,
@@ -160,14 +196,6 @@ cartography.getHexPos = function (hexX, hexY, rangeFrom)
         range: 0 
     };
 
-    if (rangeFrom) // this will be another hexInfo
-    {
-        // the largest difference in x & y co-ordinates (hopefully)
-        var xDiff = (Math.abs(hexInfo.hexX) > Math.abs(rangeFrom.hexX)?Math.abs(hexInfo.hexX):Math.abs(rangeFrom.hexX));
-        var yDiff = (Math.abs(hexInfo.hexY) > Math.abs(rangeFrom.hexY)?Math.abs(hexInfo.hexY):Math.abs(rangeFrom.hexY));
-        hexInfo.range = (xDiff > yDiff ? xDiff : yDiff);
-    }
-    
     return hexInfo;
 }
 
@@ -188,12 +216,12 @@ cartography.getNeighbouringHexs = function (hexInfo, range)
                 var x = inHexes[i].hexX;
                 var y = inHexes[i].hexY;
 
-                hexes.push(that.getHexPos((x - 1), y, hexInfo));
-                hexes.push(that.getHexPos((x + 1), y, hexInfo));
-                hexes.push(that.getHexPos(x, (y - 1), hexInfo));
-                hexes.push(that.getHexPos(x, (y + 1), hexInfo));
-                hexes.push(that.getHexPos((x - ((y % 2) == 0 ? 1 : -1)), (y - 1), hexInfo));
-                hexes.push(that.getHexPos((x - ((y % 2) == 0 ? 1 : -1)), (y + 1), hexInfo));
+                hexes.push(that.getHexPos((x - 1), y));
+                hexes.push(that.getHexPos((x + 1), y));
+                hexes.push(that.getHexPos(x, (y - 1)));
+                hexes.push(that.getHexPos(x, (y + 1)));
+                hexes.push(that.getHexPos((x - ((y % 2) == 0 ? 1 : -1)), (y - 1)));
+                hexes.push(that.getHexPos((x - ((y % 2) == 0 ? 1 : -1)), (y + 1)));
             }
             // add these onto the array to pass down
             inHexes = inHexes.concat(hexes);
@@ -205,7 +233,7 @@ cartography.getNeighbouringHexs = function (hexInfo, range)
     var withDuplicates = getHexes(hexes);
     var neighbours = [];
 
-    // clear the duplicates
+    // clear the duplicates - keeping the closest
     var duplicate = false;
     for (var i = 0; i < withDuplicates.length; i++)
     {
@@ -217,8 +245,11 @@ cartography.getNeighbouringHexs = function (hexInfo, range)
         {
             duplicate = (withDuplicates[i].hexX == neighbours[j].hexX && withDuplicates[i].hexY == neighbours[j].hexY || duplicate);
         }
-        if(!duplicate)
+        if (!duplicate)
+        {
+            //withDuplicates[i]._tile = this._map.getTileAt(withDuplicates[i].hexX, withDuplicates[i].hexY);
             neighbours.push(withDuplicates[i])
+        }
     }
 
     return neighbours;
@@ -241,7 +272,7 @@ cartography.drawBoard = function()
     }
 }
 
-cartography.drawHexagon = function(x, y, fillColour, fillOpacity, settings)
+cartography.drawHexagon = function(x, y, fillColour, fillOpacity)
 {
     this._ctx.fillStyle = fillColour;
 
@@ -263,41 +294,6 @@ cartography.drawHexagon = function(x, y, fillColour, fillOpacity, settings)
         this._ctx.restore();
     }
     this._ctx.stroke();
-
-    if (settings)
-    {
-        try
-        {
-            this._ctx.fillStyle = "#000";
-            this._ctx.font = "9px Arial";
-            this._ctx.fillText("1", x + this._hexRadius - 2, y + 10);
-            this._ctx.fillText("2", x + this._hexRectangleWidth - 9, y + this._hexHeight + 8);
-            this._ctx.fillText("3", x + this._hexRectangleWidth - 9, y + this._hexHeight + this._sideLength - 2);
-            this._ctx.fillText("4", x + this._hexRadius - 2, y + this._hexRectangleHeight - 8);
-            this._ctx.fillText("5", x + 7, y + this._sideLength + this._hexHeight - 2);
-            this._ctx.fillText("6", x + 7, y + this._hexHeight + 10);
-
-            var loc = this.getHexXY(x + this._hexRadius, y + this._hexHeight + (this._sideLength / 2));
-            var tile = this._map.getTileAt(loc.hexX, loc.hexY);
-
-            if (settings.mode == "location")
-            {
-                var cube = tile.toCube();
-                this._ctx.fillStyle = "#f00";
-                this._ctx.fillText("x: " + cube.x, x + this._hexRadius - 10, y + this._hexHeight + 10);
-                this._ctx.fillText("y: " + cube.y, x + this._hexRadius - 10, y + this._hexHeight + 20);
-                this._ctx.fillText("z: " + cube.z, x + this._hexRadius - 10, y + this._hexHeight + 30);
-            }
-
-            if (settings.mode == "distance")
-            {
-                var hex = 
-                this._ctx.fillStyle = "#f00";
-            }
-        }
-        catch (ex)
-        { }
-    }
 }
 
 cartography.drawSprite = function(x, y, element)
