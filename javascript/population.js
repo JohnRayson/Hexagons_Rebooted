@@ -9,6 +9,8 @@ population.settlement = function (inSettings)
     this._food = settings.food;
 
     this.getSprite = population.getSprite;
+
+    return this;
 }
 
 population.getSprite = function ()
