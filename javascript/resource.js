@@ -16,6 +16,7 @@ resource.grass = function ()
     this._sprite = "grass";
     this._movmentCost = 1;
 
+
     this.getSprite = resource.getSprite;
     this.getType = resource.getType;
 
