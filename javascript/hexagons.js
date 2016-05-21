@@ -1,10 +1,6 @@
 ﻿
 $(document).ready(function ()
 {
-    // testing
-    var grid = new paths.grid(10, 10);
-    grid.fillGrid();
-
     $("#endTurnBtn").button().click(function ()
     {
 

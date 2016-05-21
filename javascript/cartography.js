@@ -105,17 +105,16 @@ cartography.mouseMove = function (eventInfo)
 
 cartography.floodFill = function (source, range)
 {
-    var frontier = [];
-   
-    // add the source to the frontier
-    
     // create a unique id for this event
     var eventId = "_tmp_" + utils.createUUID();
+    // as this hex might be assessible from a number of others, we keep a track of how it was reached.
+    source[eventId] = { visited: true, range: 0, cost: 0, siblings: []};
 
-    source[eventId] = { visited: false };
+    var matched = [];
+    var frontier = [];
     frontier.push(source);
 
-    function doStuff(frontier, range)
+    function getFrontier(frontier, range)
     {
         var newFrontier = [];
 
@@ -127,27 +126,55 @@ cartography.floodFill = function (source, range)
                 if (member.substring(0, 5) == "_temp_" && member != eventId)
                     delete (frontier[i][member]);
             }
-
-            frontier[i].highlight();
-            frontier[i].writeText(range);
-            frontier[i][eventId].visited = true;
-            var near = frontier[i].getNeighbours();
-
+            // get all the neighbours of this hex, sorting the reply by movementCost
+            var near = frontier[i].getNeighbours(
+            {
+                sortFunc: function (a, b)
+                {
+                    if (a._resource._movementCost < b._resource._movementCost)
+                        return -1;
+                    else if (a._resource._movementCost > b._resource._movementCost)
+                        return 1;
+                    else
+                        return 0;
+                }
+            });
+            // loop round them all and find the shortest route to each hex coming from the ring below
             for (var j = 0; j < near.length; j++)
             {
                 if (!near[j][eventId])
                 {
-                    near[j][eventId] = { visited: false }
+                    // log the cost of gettign the here. 
+                    // this still might not be the lowest as potentially coming from one of its own siblings will be cheaper, this gets done after all are calculated
+                    near[j][eventId] = { visited: true, range: range, cost: (frontier[i][eventId].cost + near[j]._resource._movementCost), siblings: near[j].getNeighbours( { inSet: near }) };
+
                     newFrontier.push(near[j]);
+                    matched.push(near[j]);
+                }
+            }
+
+            // loop round the siblings of each one and check that the range from there isn't shorter, update it if it is
+            for (var j = 0; j < near.length; j++)
+            {
+                for (var k = 0; k < near[j][eventId].siblings.length; k++)
+                {
+                    if (near[j][eventId].cost > (near[j][eventId].siblings[k][eventId].cost + near[j]._resource._movementCost))
+                        near[j][eventId].cost = (near[j][eventId].siblings[k][eventId].cost + near[j]._resource._movementCost)
                 }
             }
         }
         return newFrontier;
     }
     // so range can be 0 based, ie a range of 0 gives just the original hex, 1 gives those next to it
-    for (var i = -1; i < range; i++)
+    for (var i = 0; i < range; i++)
     {
-        frontier = doStuff(frontier, (i+1));
+        frontier = getFrontier(frontier, (i + 1));
+    }
+
+    for (var i = 0; i < matched.length; i++)
+    {
+        matched[i].highlight();
+        matched[i].writeText(matched[i][eventId].range.toString() + "/" + matched[i][eventId].cost.toString());
     }
 }
 

@@ -97,7 +97,8 @@ map.tile = function(x, y, parent)
         var fontSize = 15;
 
         this._map._settings._ctx.font = fontSize + "px Arial";
-        this._map._settings._ctx.fillText(text, location.x - (fontSize / 2.2), location.y + fontSize);
+        this._map._settings._ctx.fillStyle = "#fff";
+        this._map._settings._ctx.fillText(text, location.x - ((fontSize / 3)*text.length), location.y + fontSize);
     }
     // ?? Not sure why this is useful
     this.toCube = function ()
@@ -108,8 +109,10 @@ map.tile = function(x, y, parent)
         return { x: x, y: y, z: z };
     };
     // gets all the hexagons that border this one
-    this.getNeighbours = function ()
+    this.getNeighbours = function (options)
     {
+        var settings = $.extend({ sortFunc: null, inSet: null }, options);
+
         var neighbours = [];
         // to the left and right are always there
         neighbours.push(this._map.getTileAt((x - 1), y));
@@ -127,6 +130,25 @@ map.tile = function(x, y, parent)
             // its null if it doesn't exist
             if (neighbours[i])
                 reply.push(neighbours[i])
+        }
+        // do we want a custom sort
+        if (settings.sortFunc != null)
+        {
+            reply.sort(settings.sortFunc);
+        }
+        // do we only want to include those in another set - an intersect
+        if (settings.inSet != null)
+        {
+            var restrictedReply = [];
+            for (var i = 0; i < settings.inSet.length; i++)
+            {
+                for (var j = 0; j < reply.length; j++)
+                {
+                    if (settings.inSet[i]._uniqueRef == reply[j]._uniqueRef)
+                        restrictedReply.push(reply[j]);
+                }
+            }
+            reply = restrictedReply;
         }
         return reply;
     }
