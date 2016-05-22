@@ -26,6 +26,11 @@ cartography.settings = function (canvasId, spriteSheet)
     this._mouseLastHex = { X: null, y: null };
 
     // functions
+    this.clear = function ()
+    {
+        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    };
+
     this.floodFill = cartography.floodFill;
     this.getMouseHex = cartography.getMouseHex;
     this.getHexPos = cartography.getHexPos;
@@ -103,16 +108,21 @@ cartography.mouseMove = function (eventInfo)
     }
 }
 
-cartography.floodFill = function (source, range)
+cartography.floodFill = function (options)
 {
+    // clear the board before highlighting
+    this.drawBoard();
+
+    var settings = $.extend({ source: null, range: 0, movement: 0 }, options);
+
     // create a unique id for this event
     var eventId = "_tmp_" + utils.createUUID();
     // as this hex might be assessible from a number of others, we keep a track of how it was reached.
-    source[eventId] = { visited: true, range: 0, cost: 0, siblings: []};
+    settings.source[eventId] = { visited: true, range: 0, cost: 0, siblings: [] };
 
     var matched = [];
     var frontier = [];
-    frontier.push(source);
+    frontier.push(settings.source);
 
     function getFrontier(frontier, range)
     {
@@ -146,7 +156,12 @@ cartography.floodFill = function (source, range)
                 {
                     // log the cost of gettign the here. 
                     // this still might not be the lowest as potentially coming from one of its own siblings will be cheaper, this gets done after all are calculated
-                    near[j][eventId] = { visited: true, range: range, cost: (frontier[i][eventId].cost + near[j]._resource._movementCost), siblings: near[j].getNeighbours( { inSet: near }) };
+                    near[j][eventId] = {
+                        visited: true,
+                        range: range,
+                        cost: (frontier[i][eventId].cost + near[j]._resource._movementCost),
+                        siblings: near[j].getNeighbours({ inSet: near })
+                    };
 
                     newFrontier.push(near[j]);
                     matched.push(near[j]);
@@ -166,15 +181,18 @@ cartography.floodFill = function (source, range)
         return newFrontier;
     }
     // so range can be 0 based, ie a range of 0 gives just the original hex, 1 gives those next to it
-    for (var i = 0; i < range; i++)
+    for (var i = 0; i < settings.range; i++)
     {
         frontier = getFrontier(frontier, (i + 1));
     }
 
     for (var i = 0; i < matched.length; i++)
     {
-        matched[i].highlight();
-        matched[i].writeText(matched[i][eventId].range.toString() + "/" + matched[i][eventId].cost.toString());
+        if (matched[i][eventId].cost <= settings.movement)
+        {
+            matched[i].highlight();
+            matched[i].writeText(matched[i][eventId].range.toString() + "/" + matched[i][eventId].cost.toString());
+        }   
     }
 }
 
@@ -294,6 +312,9 @@ cartography.getNeighbouringHexs = function (hexInfo, range)
 
 cartography.drawBoard = function()
 {
+    // clear whats there and redraw
+    this.clear();
+
     for (var x = 0; x < this._map._width; ++x)
     {
         for (var y = 0; y < this._map._height; ++y)

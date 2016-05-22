@@ -54,7 +54,7 @@ map.tile = function(x, y, parent)
     }
     this.click = function ()
     {
-        this._map._settings.floodFill(this, 3);
+        this._map._settings.floodFill({ source: this, range: 3, movement: 5 });
         /*
         var neighbours = this.getNeighbours();
         for (var i = 0; i < neighbours.length; i++)
