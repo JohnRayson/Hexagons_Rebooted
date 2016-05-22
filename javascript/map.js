@@ -28,8 +28,10 @@ map.tile = function(x, y, parent)
     // stuff about this tile
     this._resource = null;
     this._settlement = null;
+    this._troop = null;
     this._minerals = {};
     this._agriculture = {};
+    
 
     // gets the pixel location of this hex
     this.getLocation = function ()
@@ -54,7 +56,56 @@ map.tile = function(x, y, parent)
     }
     this.click = function ()
     {
-        this._map._settings.floodFill({ source: this, range: 3, movement: 5 });
+        // check the mode
+        // this logic should be moved to troop.js
+        var mode = this._map._settings._mode
+        switch (mode.type)
+        {
+            default:
+                if (this._troop)
+                {
+                    var matched = this._map._settings.floodFill({ source: this, range: this._troop._range, movement: this._troop._movement });
+                    if (matched.length > 0)
+                    {
+                        this._map._settings._mode = { type: "move", available: matched, source: this };
+                        return true;
+                    }
+                }
+                break;
+            case "move":
+                // is it the same as the source
+                if (this._uniqueRef == mode.source._uniqueRef)
+                {
+                    this._map._settings._mode = { type: null };
+                    this._map._settings.drawBoard();
+                    return true;
+                }
+                // is the click inside the available ones
+                for (var i = 0; i < mode.available.length; i++)
+                {
+                    if (this._uniqueRef == mode.available[i]._uniqueRef)
+                    {
+                        // get the event info
+                        var eventInfo = null;
+                        for (member in this)
+                        {
+                            if (member.substring(0, 5) == "_tmp_")
+                                eventInfo = this[member];
+                        }
+                        // move the troop to the new hex
+                        this._troop = $.extend(true, {}, mode.source._troop);
+                        this._troop._movement -= eventInfo.cost;
+                        this._troop._range -= eventInfo.range;
+                        mode.source._troop = null;
+
+                        this._map._settings._mode = { type: null };
+                        this._map._settings.drawBoard();
+                        return true;
+                    }
+                }
+                break;
+        }
+        
         /*
         var neighbours = this.getNeighbours();
         for (var i = 0; i < neighbours.length; i++)
@@ -90,6 +141,8 @@ map.tile = function(x, y, parent)
             cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._resource.getSprite());
         if (this._settlement)
             cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._settlement.getSprite());
+        if(this._troop)
+            cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._troop.getSprite());
     }
     this.writeText = function (text)
     {
@@ -153,10 +206,11 @@ map.tile = function(x, y, parent)
         return reply;
     }
     // highlights this hexagon
-    this.highlight = function ()
+    this.highlight = function (options)
     {
+        var settings = $.extend({ colour: "#fff" }, options);
         var loc = this.getLocation().topLeft;
-        this._map._settings.drawHexagon(loc.x, loc.y, "#fff", 0.5);
+        this._map._settings.drawHexagon(loc.x, loc.y, settings.colour, 0.5);
     };
 
     return this;

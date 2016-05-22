@@ -1,24 +1,51 @@
 ﻿
 $(document).ready(function ()
 {
+    var loadElements = ["logic", "spritesheet"];
+    var isLoaded = function(element)
+    {
+        var removeIndex = loadElements.indexOf(element);
+        if (removeIndex > -1)
+            loadElements.splice(removeIndex, 1);
+
+        if (loadElements.length == 0)
+            version.drawBoard();
+    }
+
     $("#endTurnBtn").button().click(function ()
     {
+        var $label = $("#header_turnCounter") 
+        $label.data("turn",$label.data("turn") + 1);
+        $label.html("Turn " + $label.data("turn"));
 
+        for (var i = 0; i < hexagons.info._tiles.length; i++)
+        {
+            if (hexagons.info._tiles[i]._troop)
+            {
+                hexagons.info._tiles[i]._troop.reset();
+            }
+        }
     });
    
     hexagons.spriteSheet = {
         img: new Image(),
         size: 62.35,
-        forest: { x: 0, y: 0 },
-        hamlet: { x: 0, y: 1 },
-        village: { x: 1, y: 1 },
-        grass: { x: 9, y: 0 },
-        water: { x: 9, y: 1 },
+        forest:   { x: 0, y: 0 },
+        hamlet:   { x: 0, y: 1 },
+        village:  { x: 1, y: 1 },
+        grass:    { x: 9, y: 0 },
+        water:    { x: 9, y: 1 },
         mountain: { x: 9, y: 2 },
-        swamp: { x: 9, y: 3 },
-        road_1: { x: 7, y: 0 },
-        road_2: { x: 7, y: 1 }
+        swamp:    { x: 9, y: 3 },
+        road_1:   { x: 7, y: 0 },
+        road_2:   { x: 7, y: 1 },
+        dwarf:    { x: 8, y: 0 }
     }
+    
+    hexagons.spriteSheet.img.onload = function ()
+    {
+        isLoaded("spritesheet");
+    };
     hexagons.spriteSheet.img.src = "images/62_Sprite.png";
     var version = new cartography.settings('hexmap', hexagons.spriteSheet);
 
@@ -80,6 +107,27 @@ $(document).ready(function ()
             //    tile._settlement = new population.settlement();
         }
     }
+
+    // put some troops on
+    for (var i = 0; i < hexagons.info._tiles.length; i++)
+    {
+        var tile = hexagons.info._tiles[i];
+        if (tile._resource.getType() == "grass")
+        {
+            if(Math.random() < 0.2)
+            {
+                var add = true;
+                var near = tile.getNeighbours();
+                for (var j = 0; j < near.length; j++)
+                {
+                    if (near[j]._troop != null)
+                        add = false;
+                }
+                if (add)
+                    tile._troop = new troop.dwarf();
+            }
+        }
+    }
     
     version._map = hexagons.info;
 
@@ -87,7 +135,8 @@ $(document).ready(function ()
     var docHeight = $(document).height();
     $("canvas").attr("width", docWidth).attr("height", docHeight);
 
-    version.drawBoard();
+    //version.drawBoard();
+    isLoaded("logic");
     
 });
 $(window).resize(function ()

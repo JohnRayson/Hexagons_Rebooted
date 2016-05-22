@@ -25,6 +25,8 @@ cartography.settings = function (canvasId, spriteSheet)
 
     this._mouseLastHex = { X: null, y: null };
 
+    this._mode = { type: null };
+
     // functions
     this.clear = function ()
     {
@@ -133,7 +135,7 @@ cartography.floodFill = function (options)
             // clean up the old eventIds 
             for (var member in frontier[i])
             {
-                if (member.substring(0, 5) == "_temp_" && member != eventId)
+                if (member.substring(0, 5) == "_tmp_" && member != eventId)
                     delete (frontier[i][member]);
             }
             // get all the neighbours of this hex, sorting the reply by movementCost
@@ -185,15 +187,22 @@ cartography.floodFill = function (options)
     {
         frontier = getFrontier(frontier, (i + 1));
     }
-
+    var reply = [];
     for (var i = 0; i < matched.length; i++)
     {
         if (matched[i][eventId].cost <= settings.movement)
         {
-            matched[i].highlight();
+            reply.push(matched[i]);
+
+            if (matched[i]._troop)
+                matched[i].highlight({ colour: "#f00" });
+            else
+                matched[i].highlight();
+
             matched[i].writeText(matched[i][eventId].range.toString() + "/" + matched[i][eventId].cost.toString());
         }   
     }
+    return reply;
 }
 
 cartography.mouseOut = function (eventInfo)
