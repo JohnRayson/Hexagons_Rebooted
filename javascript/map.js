@@ -6,7 +6,8 @@ map.settings = function (width, height, parent)
 {
     // hold a reference to its parent
     this._settings = parent;
-
+    this._settings._map = this;
+    
     this._width = width;
     this._height = height;
     this._tiles = []; // of map.tile
@@ -48,10 +49,17 @@ map.tile = function(x, y, parent)
 
         };
 
+        // adjust them for the potential that we have moved the map
+        reply.topLeft.x += this._map._settings._position.left;
+        reply.topLeft.y += this._map._settings._position.top;
+
         reply.middle = {
             x: reply.topLeft.x + (this._map._settings._hexRectangleWidth / 2),
             y: reply.topLeft.y + ((this._map._settings._sideLength + this._map._settings._hexHeight)/2)
         };
+
+        
+
         return reply;
     }
     this.click = function ()
@@ -105,44 +113,27 @@ map.tile = function(x, y, parent)
                 }
                 break;
         }
-        
-        /*
-        var neighbours = this.getNeighbours();
-        for (var i = 0; i < neighbours.length; i++)
-        {
-            neighbours[i].highlight();
-        }
-        */
-        /*
-        var id = Math.random().toString().substring(3);
-
-        var html = "<div title='You clicked' id='" + id + "' >"
-                 + "id: " + id + "<br />"
-                 + "resource: " + (this._resource || "") + "<br />"
-                 + "settlement: " + (this._settlement || "") + "<br />"
-                 + "</div>";
-
-        $(html).dialog(
-        {
-            modal: true,
-            close: function () { $(this).empty().remove(); },
-            buttons: { "Close": function () { $(this).dialog("close"); } }
-        });
-        */
+        // nothing else, just highlight the clicked - this is for debugging
+        //this.highlight();
     }
     this.draw = function ()
     {
         var cartography = this._map._settings;
         var hexTopLeft = this.getLocation().topLeft;
 
-        cartography.drawHexagon(hexTopLeft.x, hexTopLeft.y, this._resource._colour, 1);
+        // is it actually viewable
+        //if (hexTopLeft.x > -50 && hexTopLeft.y > -50 && hexTopLeft.x < 1000 && hexTopLeft.y < 1000)
+        //{
 
-        if(this._resource)
-            cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._resource.getSprite());
-        if (this._settlement)
-            cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._settlement.getSprite());
-        if(this._troop)
-            cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._troop.getSprite());
+            cartography.drawHexagon(hexTopLeft.x, hexTopLeft.y, this._resource._colour, 1);
+
+            if (this._resource)
+                cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._resource.getSprite());
+            if (this._settlement)
+                cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._settlement.getSprite());
+            if (this._troop)
+                cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._troop.getSprite());
+        //}
     }
     this.writeText = function (text)
     {

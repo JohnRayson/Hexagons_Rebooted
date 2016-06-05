@@ -7,8 +7,8 @@
         <link href="css/page.css" rel="stylesheet" />
         <link href="css/jquery-ui.min.css" rel="stylesheet" />
 
-        <script src="https://code.jquery.com/jquery-2.2.0.min.js" type="text/javascript"></script>
-        <script src="javascript/jquery-ui.min.js"></script>
+        <!-- <script src="https://code.jquery.com/jquery-2.2.0.min.js" type="text/javascript"></script> -->
+        <!-- <script src="javascript/jquery-ui.min.js"></script> -->
         
         <script src="javascript/utils.js"></script>
         <script src="javascript/hexagons.js"></script>
@@ -31,8 +31,13 @@
                 <div class="content">
                     <canvas id="hexmap" width="660" height="624"></canvas>
                 </div>
+                <div class="mapscroller" style="top: 0px; left: 0px; height: 50px; width: 100%;" id="scroll-up"></div>
+                <div class="mapscroller" style="bottom: 0px; left: 0px; height: 50px; width: 100%;" id="scroll-down"></div>
+                <div class="mapscroller" style="top: 0px; left: 0px; height: 100%; width: 50px;" id="scroll-left"></div>
+                <div class="mapscroller" style="bottom: 0px; right: 0px; height: 100%; width: 50px;" id="scroll-right"></div>
             </div>
-            <div class="footer"></div>
+            
+            <!-- <div class="footer"></div>-->
         </div>
     </body>
 </html>

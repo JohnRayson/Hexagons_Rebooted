@@ -1,5 +1,5 @@
 # Hexagons_Rebooted
-Rebooted as its the same idea as a previous repository (Hexagons) but started again after learnign that the original was all wrong.
+Rebooted as its the same idea as a previous repository (Hexagons) but started again after realising that the original was all wrong.
 
 The core of the Hexagon drawing function is derived (and a lot of the code is the still the same but re-worked) from the fantastic work of ZackTheHuman https://gist.github.com/zackthehuman/1867663
 
@@ -9,6 +9,7 @@ Dwarves:
 * have a maximum range of 3 hexes from their start point
 * have a movment of 5
 * get their allowences refreshed each turn
+* consume other dwarves when moved onto the same hex
 
 Movement cost of terrain is:
 * Grass: 1

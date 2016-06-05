@@ -1,5 +1,9 @@
 ﻿var cartography = {};
 
+cartography.mapMode = {
+    type: null
+};
+
 cartography.settings = function (canvasId, spriteSheet)
 {
     this._canvas = document.getElementById(canvasId);
@@ -17,6 +21,8 @@ cartography.settings = function (canvasId, spriteSheet)
     this._hexRectangleWidth = null;
     this._hexagonAngle = 0.523598776; // 30 degrees in radians
     this._sideLength = 36;
+    this._extent = { bottom: 0, right: 0 };
+    this._position = { top: 0, left: 0 };
 
     this._hexHeight = Math.sin(this._hexagonAngle) * this._sideLength;
     this._hexRadius = Math.cos(this._hexagonAngle) * this._sideLength;
@@ -25,13 +31,61 @@ cartography.settings = function (canvasId, spriteSheet)
 
     this._mouseLastHex = { X: null, y: null };
 
-    this._mode = { type: null };
+    this._mode = cartography.mapMode;
 
     // functions
+    this.setExtent = function ()
+    {
+        this._extent.bottom = (((this._hexRectangleHeight - this._hexHeight) * this._map._height) - this._canvas.height) + this._hexHeight;
+        this._extent.right = ((this._hexRectangleWidth * this._map._width) - this._canvas.width) + (this._hexRectangleWidth / 2);
+    };
     this.clear = function ()
     {
         this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     };
+    this._scrollInterval = null;
+    this.scroll = function (direction)
+    {
+        var that = this;
+        function start(direction)
+        {
+            var speed = 10;
+            that._scrollInterval = window.setInterval(function ()
+            {
+                speed++;
+                switch (direction)
+                {
+                    case "up":
+                        that._position.top += speed;
+                        that._position.top = (that._position.top > 0 ? 0 : that._position.top);
+                        break;
+                    case "down":
+                        that._position.top -= speed;
+                        that._position.top = (that._position.top > (0-that._extent.bottom) ? that._position.top : (0-that._extent.bottom));
+                        break;
+                    case "left":
+                        that._position.left += speed;
+                        that._position.left = (that._position.left > 0 ? 0 : that._position.left);
+                        break;
+                    case "right":
+                        that._position.left -= speed;
+                        that._position.left = (that._position.left > (0 - that._extent.right) ? that._position.left : (0 - that._extent.right));
+                        break;
+                }
+                hexagons.info._settings.drawBoard();
+            }, 50);
+        }
+        function stop()
+        {
+            if(that._scrollInterval)
+                window.clearInterval(that._scrollInterval);
+        }
+        if (direction == "stop")
+            stop();
+        else
+            start(direction);
+    }
+
 
     this.floodFill = cartography.floodFill;
     this.getMouseHex = cartography.getMouseHex;
@@ -42,7 +96,15 @@ cartography.settings = function (canvasId, spriteSheet)
     this.drawHexagon = cartography.drawHexagon;
     this.drawSprite = cartography.drawSprite;
 
-    this.mouseClick = cartography.mouseClick;
+    this.mouseClick = function (eventInfo)
+    {
+        var mouseCurrentHex = this.getMouseHex(eventInfo);
+
+        var tile = this._map.getTileAt(mouseCurrentHex.hexX, mouseCurrentHex.hexY);
+        if (tile)
+            tile.click();
+    }
+
     this.mouseMove = cartography.mouseMove;
     this.mouseOut = cartography.mouseOut;
 
@@ -67,16 +129,6 @@ cartography.go = function (elementId, map, spriteSheet)
     var version = new cartography.settings(elementId, map, spriteSheet);
     
     version.drawBoard();
-}
-
-cartography.mouseClick = function(eventInfo)
-{
-    var mouseCurrentHex = this.getMouseHex(eventInfo);
-    
-    var tile = this._map.getTileAt(mouseCurrentHex.hexX, mouseCurrentHex.hexY);
-    if(tile)
-        tile.click();
-             
 }
 
 cartography.mouseMove = function (eventInfo)
@@ -218,6 +270,10 @@ cartography.getMouseHex = function(eventInfo)
     x = eventInfo.offsetX || eventInfo.layerX;
     y = eventInfo.offsetY || eventInfo.layerY;
 
+    // adjust them for the potential that we have moved the map
+    x += (0-this._position.left);
+    y += (0-this._position.top);
+
     hexY = Math.floor(y / (this._hexHeight + this._sideLength));
     hexX = Math.floor((x - (hexY % 2) * this._hexRadius) / this._hexRectangleWidth);
 
@@ -337,6 +393,7 @@ cartography.drawBoard = function()
             { } // map might not be exacally square
         }
     }
+    this.setExtent();
 }
 
 cartography.drawHexagon = function(x, y, fillColour, fillOpacity)
