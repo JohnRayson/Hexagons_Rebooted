@@ -1,14 +1,29 @@
 ﻿var resource = {};
-
-resource.getSprite = function ()
+// base model contains client only stuff
+resource.baseModel = 
 {
-    return this._sprite;
-}
-resource.getType = function ()
-{
-    return this._type;
+    getSprite: function ()
+    {
+        return this._sprite;
+    },
+    getType: function ()
+    {
+        return this._type;
+    }
 }
 
+// create a resource type
+resource.createModel = function (data)
+{
+    var model = $.extend({}, resource.baseModel, data);
+    // allow it to be instancised
+    resource[model._type] = function ()
+    {
+        return model;
+    }
+}
+
+/*
 resource.grass = function ()
 {
     this._type = "grass";
@@ -73,4 +88,4 @@ resource.mountain = function ()
 
     return this;
 }
-
+*/

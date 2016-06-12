@@ -100,15 +100,24 @@ map.tile = function(x, y, parent)
                             if (member.substring(0, 5) == "_tmp_")
                                 eventInfo = this[member];
                         }
-                        // move the troop to the new hex
-                        this._troop = $.extend(true, {}, mode.source._troop);
-                        this._troop._movement -= eventInfo.cost;
-                        this._troop._range -= eventInfo.range;
-                        mode.source._troop = null;
 
-                        this._map._settings._mode = { type: null };
-                        this._map._settings.drawBoard();
-                        return true;
+                        // is there already a troop here?
+                        if (this._troop)
+                        {
+                            mode.source._troop.fight(this._troop);
+                        }
+                        else // move the troop to the new hex
+                        {
+                            // this clones the object true = deep copy.
+                            this._troop = $.extend(true, {}, mode.source._troop);
+                            this._troop._movement -= eventInfo.cost;
+                            this._troop._range -= eventInfo.range;
+                            mode.source._troop = null;
+
+                            this._map._settings._mode = { type: null };
+                            this._map._settings.drawBoard();
+                            return true;
+                        }
                     }
                 }
                 break;
