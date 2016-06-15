@@ -22,8 +22,15 @@ public partial class Server : System.Web.UI.Page
     {
         switch (type)
         {
+            // base types
+            case "Troop": return new Troop();
+            case "Resource": return new Resource();
+
+            // troops
             case "Archer": return new Archer();
             case "Spearman": return new Spearman();
+
+            // resources
             case "Grass": return new Grass();
             case "Swamp": return new Swamp();
             case "Water": return new Water();
@@ -36,8 +43,14 @@ public partial class Server : System.Web.UI.Page
 
     // resolve a combat
     [WebMethod]
-    public static Combat CombatResolution(Combat fight)
+    public static Troop CombatResolution(Combat fight)
     {
-        return fight;
+        double attackVal = (fight.attacker._attack + fight.attacker._loyalty + fight.attackHex._attackModifier);
+        double defenseVal = (fight.defender._defense + fight.defender._loyalty + fight.defenceHex._defenseModifier);
+
+        if (attackVal > defenseVal)
+            return fight.attacker;
+
+        return fight.defender;
     }
 }

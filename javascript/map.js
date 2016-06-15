@@ -12,6 +12,9 @@ map.settings = function (width, height, parent)
     this._height = height;
     this._tiles = []; // of map.tile
 
+    // to remember its state on redraw
+    this._drawState = null;
+
     //functions
     this.getTileAt = map.getTileAt;
 }
@@ -85,7 +88,7 @@ map.tile = function(x, y, parent)
                 if (this._uniqueRef == mode.source._uniqueRef)
                 {
                     this._map._settings._mode = { type: null };
-                    this._map._settings.drawBoard();
+                    this._map._settings.drawBoard(); 
                     return true;
                 }
                 // is the click inside the available ones
@@ -116,6 +119,7 @@ map.tile = function(x, y, parent)
 
                             this._map._settings._mode = { type: null };
                             this._map._settings.drawBoard();
+
                             return true;
                         }
                     }
@@ -125,14 +129,17 @@ map.tile = function(x, y, parent)
         // nothing else, just highlight the clicked - this is for debugging
         //this.highlight();
     }
-    this.draw = function ()
+    this.draw = function (preserve)
     {
         var cartography = this._map._settings;
         var hexTopLeft = this.getLocation().topLeft;
 
+        if (!preserve)
+            this._drawState = null;
+
         // is it actually viewable
         //if (hexTopLeft.x > -50 && hexTopLeft.y > -50 && hexTopLeft.x < 1000 && hexTopLeft.y < 1000)
-        //{
+        {
 
             cartography.drawHexagon(hexTopLeft.x, hexTopLeft.y, this._resource._colour, 1);
 
@@ -142,8 +149,18 @@ map.tile = function(x, y, parent)
                 cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._settlement.getSprite());
             if (this._troop)
                 cartography.drawSprite(hexTopLeft.x, hexTopLeft.y, this._troop.getSprite());
-        //}
+
+            // has it been drawn on before
+            if (this._drawState)
+            {
+                if (this._drawState.highlight)
+                    this.highlight(this._drawState.highlight);
+                if (this._drawState.text)
+                    this.writeText(this._drawState.text);
+            }
+        }
     }
+    // writes text on the hex
     this.writeText = function (text)
     {
         var location = this.getLocation().middle;
@@ -151,7 +168,8 @@ map.tile = function(x, y, parent)
 
         this._map._settings._ctx.font = fontSize + "px Arial";
         this._map._settings._ctx.fillStyle = "#fff";
-        this._map._settings._ctx.fillText(text, location.x - ((fontSize / 3)*text.length), location.y + fontSize);
+        this._map._settings._ctx.fillText(text, location.x - ((fontSize / 3) * text.length), location.y + fontSize);
+
     }
     // ?? Not sure why this is useful
     this.toCube = function ()

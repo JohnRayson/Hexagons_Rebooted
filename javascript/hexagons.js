@@ -28,6 +28,19 @@ utils.ready(function ()
 
             if (loadElements.length == 0)
             {
+                // get the base types, from which the named types are derived
+                var baseModels = ["Troop", "Resource"];
+                for (var model = 0; model < baseModels.length; model++)
+                {
+                    baseModels[model] = {
+                        path: "GetModel",
+                        data: { type: baseModels[model] },
+                        success: function (data)
+                        {
+                            baseTypes.createModel(data);
+                        }
+                    }
+                }
                 // load the troops
                 var troopModels = ["Archer", "Spearman"];
                 for (var model = 0; model < troopModels.length; model++)
@@ -55,7 +68,7 @@ utils.ready(function ()
                     }
                 }
                 // put the lists togtether
-                var models = [].concat(troopModels, resourceModels);
+                var models = [].concat(baseModels, troopModels, resourceModels);
                 // wait till they have all been built
                 utils.await(models, function ()
                 {
@@ -181,7 +194,7 @@ utils.ready(function ()
         var docHeight = $(document).height();
         $("canvas").attr("width", docWidth).attr("height", docHeight);
 
-        hexagons.info._settings.drawBoard();
+        hexagons.info._settings.drawBoard(true);
        
     });
 

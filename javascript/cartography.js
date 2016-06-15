@@ -72,7 +72,7 @@ cartography.settings = function (canvasId, spriteSheet)
                         that._position.left = (that._position.left > (0 - that._extent.right) ? that._position.left : (0 - that._extent.right));
                         break;
                 }
-                hexagons.info._settings.drawBoard();
+                hexagons.info._settings.drawBoard(true); // preseve the drawstate
             }, 50);
         }
         function stop()
@@ -246,12 +246,17 @@ cartography.floodFill = function (options)
         {
             reply.push(matched[i]);
 
-            if (matched[i]._troop)
-                matched[i].highlight({ colour: "#f00" });
-            else
-                matched[i].highlight();
+            var highlightOpts = {};
+            var text = matched[i][eventId].range.toString() + "/" + matched[i][eventId].cost.toString();
 
-            matched[i].writeText(matched[i][eventId].range.toString() + "/" + matched[i][eventId].cost.toString());
+            if (matched[i]._troop) // red if there is another troop on the hex, else default (white)
+                highlightOpts = { colour: "#f00" };
+            
+
+            matched[i].highlight(highlightOpts);
+            matched[i].writeText(text);
+
+            matched[i]._drawState = { highlight: highlightOpts, text: text };
         }   
     }
     return reply;
@@ -375,7 +380,7 @@ cartography.getNeighbouringHexs = function (hexInfo, range)
     return neighbours;
 }
 
-cartography.drawBoard = function()
+cartography.drawBoard = function(preserve)
 {
     // clear whats there and redraw
     this.clear();
@@ -387,7 +392,7 @@ cartography.drawBoard = function()
             try
             {
                 var tile = this._map.getTileAt(x, y);
-                tile.draw(this);
+                tile.draw(preserve);
             }
             catch (ex)
             { } // map might not be exacally square

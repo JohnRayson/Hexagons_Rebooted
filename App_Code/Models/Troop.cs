@@ -6,7 +6,7 @@ using System.Web;
 /// <summary>
 /// The movable, fighting, people that wander around our map
 /// </summary>
-public class Troop
+public class Troop : BaseType
 {
     // for display
     public string _sprite;
@@ -17,6 +17,11 @@ public class Troop
     public double _loyalty;
     public double _attack;
     public double _defense;
+
+    public Troop()
+    {
+        ModelType = "Troop";
+    }
 }
 
 public class Spearman : Troop
@@ -47,4 +52,5 @@ public class Archer : Troop
 public class Combat
 {
     public Troop attacker, defender;
+    public Resource attackHex, defenceHex;
 }
